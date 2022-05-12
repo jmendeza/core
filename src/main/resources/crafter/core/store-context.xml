@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+  ~ Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License version 3 as published by
@@ -27,7 +27,7 @@
         <property name="descriptorFileExtension" value="${crafter.core.store.descriptorFile.extension}"/>
         <property name="pathValidator">
             <bean class="org.craftercms.commons.validation.validators.impl.SecurePathValidator">
-                <constructor-arg value="path"/>
+                <constructor-arg name="targetKey" value="path"/>
             </bean>
         </property>
     </bean>
@@ -45,14 +45,32 @@
     <!-- Content Store Service -->
 
     <bean id="crafter.contentStoreService" class="org.craftercms.core.service.impl.ContentStoreServiceImpl">
-        <property name="cacheTemplate" ref="crafter.cacheTemplate"/>
-        <property name="merger" ref="crafter.merger"/>
-        <property name="processorResolver" ref="crafter.procesorResolverChain"/>
-        <property name="mergeStrategyResolver" ref="crafter.mergeStrategyResolverChain"/>
-        <property name="storeAdapterRegistry" ref="crafter.contentStoreAdapterRegistry"/>
+        <constructor-arg name="cacheTemplate" ref="crafter.cacheTemplate"/>
+        <constructor-arg name="merger" ref="crafter.merger"/>
+        <constructor-arg name="processorResolver" ref="crafter.procesorResolverChain"/>
+        <constructor-arg name="mergeStrategyResolver" ref="crafter.mergeStrategyResolverChain"/>
+        <constructor-arg name="storeAdapterRegistry" ref="crafter.contentStoreAdapterRegistry"/>
 
-        <property name="blobUrlResolver" ref="crafter.blobUrlResolver"/>
-        <property name="blobStoreResolver" ref="crafter.blobStoreResolver"/>
+        <constructor-arg name="blobUrlResolver" ref="crafter.blobUrlResolver"/>
+        <constructor-arg name="blobStoreResolver" ref="crafter.blobStoreResolver"/>
+
+        <constructor-arg name="sourceAttributeName" value="${crafter.core.store.source.attribute.name}"/>
+        <constructor-arg name="sourceTypeAttributeName" value="${crafter.core.store.source.type.attribute.name}"/>
+        <constructor-arg name="sourceTypeXPath" value="${crafter.core.store.source.type.xpath}"/>
+
+        <property name="sourceAttributeEnabled" value="${crafter.core.store.source.attribute.enabled}"/>
+        <property name="flatteningProcessor" ref="crafter.includeDescriptorsProcessor"/>
+    </bean>
+
+    <bean id="crafter.includeDescriptorsProcessor"
+          class="org.craftercms.core.processors.impl.PageAwareIncludeDescriptorsProcessor">
+        <property name="includeElementXPathQuery" value="${crafter.core.flattening.include.xpath.query}"/>
+        <property name="removeIncludeElement" value="${crafter.core.flattening.include.remove.tags}"/>
+        <property name="disabledIncludeNodeXPathQuery" value="${crafter.core.flattening.include.disable.xpath.query}"/>
+        <property name="localeCodeXPathQuery" value="${crafter.core.flattening.locale.xpath.query}"/>
+        <property name="pagesPathPattern" value="${crafter.core.flattening.pages.pattern}"/>
+        <property name="includedItemsProcessor" ref="crafter.includeDescriptorsProcessor"/>
+        <property name="contentStoreService" ref="crafter.contentStoreService"/>
     </bean>
 
 </beans>

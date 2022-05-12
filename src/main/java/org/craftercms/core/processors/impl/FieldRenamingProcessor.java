@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -29,6 +29,7 @@ import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 
 /**
  * Created by alfonso on 2/21/17.
@@ -56,21 +57,26 @@ public class FieldRenamingProcessor implements ItemProcessor {
                     logger.debug("Renaming elements that match XPath " + xpath + " to '" + newName + "' for descriptor of " + item);
                 }
 
-                List<Element> elements = document.selectNodes(xpath);
-                if (CollectionUtils.isNotEmpty(elements)) {
+                List<Node> nodes = document.selectNodes(xpath);
+                if (CollectionUtils.isNotEmpty(nodes)) {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Number of matching elements: " + elements.size());
+                        logger.debug("Number of matching nodes: " + nodes.size());
                     }
 
-                    for (Element element : elements) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Renaming element " + element.getUniquePath() + " to ");
-                        }
+                    for (Node node: nodes) {
+                        if (node.getNodeType() == Node.ELEMENT_NODE) {
+                            Element element = (Element) node;
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Renaming element " + element.getUniquePath() + " to ");
+                            }
 
-                        element.setName(newName);
+                            element.setName(newName);
 
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Element renamed to " + element.getUniquePath());
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Element renamed to " + element.getUniquePath());
+                            }
+                        } else {
+                            logger.info("Unable to execute against a non-XML-element: " + node.getUniquePath());
                         }
                     }
                 }

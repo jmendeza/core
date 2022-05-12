@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -24,15 +24,15 @@ import org.craftercms.core.service.impl.ExcludeByUrlItemFilter;
 import org.craftercms.core.service.impl.IncludeByUrlItemFilter;
 import org.craftercms.core.util.cache.impl.CachingAwareList;
 import org.dom4j.Document;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.beans.factory.InitializingBean;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
+import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +44,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(RestControllerBase.REST_BASE_URI + ContentStoreRestController.URL_ROOT)
-public class ContentStoreRestController extends RestControllerBase {
+public class ContentStoreRestController extends RestControllerBase implements InitializingBean {
 
     public static final String URL_ROOT = "/content_store";
     public static final String CACHE_CONTROL_HEADER_NAME = "Cache-Control";
@@ -63,8 +63,8 @@ public class ContentStoreRestController extends RestControllerBase {
 
     private ItemFilter itemFilter;
 
-    @Required
-    public void setStoreService(ContentStoreService storeService) {
+    @ConstructorProperties({"storeService"})
+    public ContentStoreRestController(ContentStoreService storeService) {
         this.storeService = storeService;
     }
 
@@ -76,8 +76,7 @@ public class ContentStoreRestController extends RestControllerBase {
         this.forbiddenUrlPatterns = forbiddenUrlPatterns;
     }
 
-    @PostConstruct
-    public void init() {
+    public void afterPropertiesSet() {
         CompositeItemFilter compositeItemFilter = new CompositeItemFilter();
         compositeItemFilter.setFilters(Arrays.asList(new IncludeByUrlItemFilter(allowedUrlPatterns),
                                                      new ExcludeByUrlItemFilter(forbiddenUrlPatterns)));
@@ -85,13 +84,17 @@ public class ContentStoreRestController extends RestControllerBase {
         itemFilter = compositeItemFilter;
     }
 
+    /**
+     * @deprecated Will be removed in 4.1, use {@code getItem} instead
+     */
     @RequestMapping(value = URL_DESCRIPTOR, method = RequestMethod.GET)
     public Document getDescriptor(WebRequest request, HttpServletResponse response,
                                   @RequestParam(REQUEST_PARAM_CONTEXT_ID) String contextId,
-                                  @RequestParam(REQUEST_PARAM_URL) String url)
+                                  @RequestParam(REQUEST_PARAM_URL) String url,
+                                  @RequestParam(required = false, defaultValue = "false") boolean flatten)
             throws InvalidContextException, StoreException, PathNotFoundException, ForbiddenPathException,
                    ItemProcessingException, XmlMergeException, XmlFileParseException {
-        Item item = getItem(request, response, contextId, url);
+        Item item = getItem(request, response, contextId, url, flatten);
 
         if (item != null) {
             return item.getDescriptorDom();
@@ -103,7 +106,8 @@ public class ContentStoreRestController extends RestControllerBase {
     @RequestMapping(value = URL_ITEM, method = RequestMethod.GET)
     public Item getItem(WebRequest request, HttpServletResponse response,
                                        @RequestParam(REQUEST_PARAM_CONTEXT_ID) String contextId,
-                                       @RequestParam(REQUEST_PARAM_URL) String url)
+                                       @RequestParam(REQUEST_PARAM_URL) String url,
+                                       @RequestParam(required = false, defaultValue = "false") boolean flatten)
             throws InvalidContextException, StoreException, PathNotFoundException, ForbiddenPathException,
                    ItemProcessingException, XmlMergeException, XmlFileParseException {
         checkIfUrlAllowed(url);
@@ -113,7 +117,7 @@ public class ContentStoreRestController extends RestControllerBase {
             throw new InvalidContextException("No context found for ID " + contextId);
         }
 
-        Item item = storeService.getItem(context, url);
+        Item item = storeService.getItem(context, null, url, null, flatten);
 
         if (item.getCachingTime() != null && checkNotModified(item.getCachingTime(), request, response)) {
             return null;
@@ -125,7 +129,8 @@ public class ContentStoreRestController extends RestControllerBase {
     @RequestMapping(value = URL_CHILDREN, method = RequestMethod.GET)
     public List<Item> getChildren(WebRequest request, HttpServletResponse response,
                                   @RequestParam(REQUEST_PARAM_CONTEXT_ID) String contextId,
-                                  @RequestParam(REQUEST_PARAM_URL) String url)
+                                  @RequestParam(REQUEST_PARAM_URL) String url,
+                                  @RequestParam(required = false, defaultValue = "false") boolean flatten)
             throws InvalidContextException, StoreException, PathNotFoundException, ForbiddenPathException,
                    ItemProcessingException, XmlMergeException, XmlFileParseException {
         checkIfUrlAllowed(url);
@@ -136,7 +141,7 @@ public class ContentStoreRestController extends RestControllerBase {
         }
 
         CachingAwareList<Item> children =
-                (CachingAwareList<Item>) storeService.getChildren(context, null, url, itemFilter, null);
+                (CachingAwareList<Item>) storeService.getChildren(context, null, url, itemFilter, null, flatten);
 
         if (children.getCachingTime() != null && checkNotModified(children.getCachingTime(), request, response)) {
             return null;
@@ -149,7 +154,8 @@ public class ContentStoreRestController extends RestControllerBase {
     public Tree getTree(WebRequest request, HttpServletResponse response,
                                        @RequestParam(REQUEST_PARAM_CONTEXT_ID) String contextId,
                                        @RequestParam(REQUEST_PARAM_URL) String url,
-                                       @RequestParam(value = REQUEST_PARAM_TREE_DEPTH, required = false) Integer depth)
+                                       @RequestParam(value = REQUEST_PARAM_TREE_DEPTH, required = false) Integer depth,
+                                       @RequestParam(required = false, defaultValue = "false") boolean flatten)
             throws InvalidContextException, StoreException, PathNotFoundException, ForbiddenPathException,
                    ItemProcessingException, XmlMergeException, XmlFileParseException {
         checkIfUrlAllowed(url);
@@ -163,7 +169,7 @@ public class ContentStoreRestController extends RestControllerBase {
             depth = ContentStoreService.UNLIMITED_TREE_DEPTH;
         }
 
-        Tree tree = storeService.getTree(context, null, url, depth, itemFilter, null);
+        Tree tree = storeService.getTree(context, null, url, depth, itemFilter, null, false);
 
         if (tree.getCachingTime() != null && checkNotModified(tree.getCachingTime(), request, response)) {
             return null;

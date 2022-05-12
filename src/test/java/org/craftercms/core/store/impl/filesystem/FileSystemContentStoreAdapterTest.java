@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -40,7 +40,6 @@ import static org.craftercms.core.service.Context.DEFAULT_MAX_ALLOWED_ITEMS_IN_C
 import static org.craftercms.core.service.Context.DEFAULT_MERGING_ON;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyVararg;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -153,7 +152,7 @@ public class FileSystemContentStoreAdapterTest {
 
     private void setUpTestCacheTemplate() {
         cacheTemplate = mock(CacheTemplate.class);
-        when(cacheTemplate.getObject(any(Context.class), eq(DEFAULT_CACHING_OPTIONS), any(Callback.class), anyVararg()))
+        when(cacheTemplate.getObject(any(Context.class), eq(DEFAULT_CACHING_OPTIONS), any(Callback.class), any()))
                 .thenAnswer(invocation -> ((Callback<?>) invocation.getArguments()[2]).execute());
     }
 
@@ -200,7 +199,7 @@ public class FileSystemContentStoreAdapterTest {
 
         Node body = item.getDescriptorDom().selectSingleNode("/descriptor/body");
         assertNotNull(body);
-        assertEquals("Crafter Software", body.getText());
+        assertEquals("CrafterCMS", body.getText());
     }
 
     private static class ItemComparator implements Comparator<Item> {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,17 +15,16 @@
  */
 package org.craftercms.core.util.cache.impl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.craftercms.commons.lang.Callback;
-import org.craftercms.core.cache.CacheLoader;
 import org.craftercms.core.service.CacheService;
 import org.craftercms.core.service.Context;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.craftercms.core.service.CachingOptions.DEFAULT_CACHING_OPTIONS;
 import static org.craftercms.core.util.CacheUtils.generateKey;
@@ -67,7 +66,7 @@ public class DefaultCacheTemplateTest {
         Object key = generateKey(RANDOM_KEY_ELEM);
 
         verify(cache, atLeast(2)).get(context, key);
-        verify(cache).put(eq(context), eq(key), eq(time1), eq(DEFAULT_CACHING_OPTIONS), any(CacheLoader.class));
+        verify(cache).put(eq(context), eq(key), eq(time1), eq(DEFAULT_CACHING_OPTIONS), any());
     }
 
     private void setUpTestContext() {
@@ -98,8 +97,8 @@ public class DefaultCacheTemplateTest {
         Object key = generateKey(RANDOM_KEY_ELEM);
 
         when(this.cache.get(context, key)).thenAnswer(getFromCacheAnswer);
-        doAnswer(putInCacheAnswer).when(this.cache).put(eq(context), eq(key), anyObject(), eq(DEFAULT_CACHING_OPTIONS),
-                                                        any(CacheLoader.class));
+        doAnswer(putInCacheAnswer).when(this.cache).put(eq(context), eq(key), any(), eq(DEFAULT_CACHING_OPTIONS),
+                                                        any());
     }
 
     private void setUpTestCacheCallback() {

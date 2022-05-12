@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+  ~ Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License version 3 as published by
@@ -24,7 +24,7 @@
 
     <!--
 	Activates various annotations to be detected in bean classes: Spring's @Required and @Autowired, as well as JSR
-	250's @PostConstruct, @PreDestroy and @Resource (if available), JAX-WS's @WebServiceRef (if available), EJB3's @EJB
+	250's @Resource (if available), JAX-WS's @WebServiceRef (if available), EJB3's @EJB
 	(if available), and JPA's @PersistenceContext and @PersistenceUnit (if available).
     -->
     <context:annotation-config/>

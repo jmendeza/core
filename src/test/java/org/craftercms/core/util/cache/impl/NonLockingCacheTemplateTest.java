@@ -22,13 +22,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static java.util.Collections.singletonList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,7 +59,7 @@ public class NonLockingCacheTemplateTest {
     public void testCacheIsNotUsed() {
         cacheTemplate.getObject(context, () -> CACHE_VALUE, CACHE_KEY);
 
-        verify(cacheService, times(2)).get(eq(context), eq(singletonList(CACHE_KEY).toString()));
+        verify(cacheService, times(2)).get(eq(context), eq(List.of(CACHE_KEY).toString()));
         verify(lockFactory, never()).getLock(any());
     }
 

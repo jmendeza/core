@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,18 +15,16 @@
  */
 package org.craftercms.core.xml.mergers.impl.resolvers;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-import org.craftercms.core.xml.mergers.impl.resolvers.DescriptorMergeStrategyResolverChain;
-import org.dom4j.Document;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Matchers;
 import org.craftercms.core.xml.mergers.DescriptorMergeStrategy;
 import org.craftercms.core.xml.mergers.DescriptorMergeStrategyResolver;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 
 import java.util.Arrays;
+
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.*;
 
 /**
  * Class description goes HERE
@@ -70,10 +68,10 @@ public class DescriptorMergeStrategyResolverChainTest {
 
     private void setUpTestResolverChain() {
         DescriptorMergeStrategyResolver resolver1 = mock(DescriptorMergeStrategyResolver.class);
-        when(resolver1.getStrategy(eq(DESCRIPTOR_URL1), Matchers.<Document>anyObject())).thenReturn(strategy1);
+        when(resolver1.getStrategy(eq(DESCRIPTOR_URL1), ArgumentMatchers.any())).thenReturn(strategy1);
 
         DescriptorMergeStrategyResolver resolver2 = mock(DescriptorMergeStrategyResolver.class);
-        when(resolver2.getStrategy(eq(DESCRIPTOR_URL2), Matchers.<Document>anyObject())).thenReturn(strategy2);
+        when(resolver2.getStrategy(eq(DESCRIPTOR_URL2), ArgumentMatchers.any())).thenReturn(strategy2);
 
         resolverChain = new DescriptorMergeStrategyResolverChain();
         resolverChain.setResolvers(Arrays.asList(resolver1, resolver2));

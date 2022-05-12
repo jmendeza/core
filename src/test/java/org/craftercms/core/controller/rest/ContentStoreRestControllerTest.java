@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,12 +15,7 @@
  */
 package org.craftercms.core.controller.rest;
 
-import java.util.ArrayList;
-import java.util.function.Supplier;
-import javax.servlet.http.HttpServletResponse;
-
 import org.craftercms.core.exception.ForbiddenPathException;
-import org.craftercms.core.processors.ItemProcessor;
 import org.craftercms.core.service.*;
 import org.craftercms.core.store.ContentStoreAdapter;
 import org.craftercms.core.util.cache.CachingAwareObject;
@@ -32,22 +27,17 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.function.Supplier;
+
 import static org.craftercms.core.controller.rest.ContentStoreRestController.CACHE_CONTROL_HEADER_NAME;
 import static org.craftercms.core.controller.rest.ContentStoreRestController.MUST_REVALIDATE_HEADER_VALUE;
 import static org.craftercms.core.service.ContentStoreService.UNLIMITED_TREE_DEPTH;
-import static org.craftercms.core.service.Context.DEFAULT_CACHE_ON;
-import static org.craftercms.core.service.Context.DEFAULT_IGNORE_HIDDEN_FILES;
-import static org.craftercms.core.service.Context.DEFAULT_MAX_ALLOWED_ITEMS_IN_CACHE;
-import static org.craftercms.core.service.Context.DEFAULT_MERGING_ON;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.craftercms.core.service.Context.*;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
 * Class description goes HERE
@@ -86,83 +76,88 @@ public class ContentStoreRestControllerTest {
 
     @Test
     public void testGetItemNotModified() throws Exception {
-        testNotModified(item, () -> storeRestController.getItem(webRequest, response, context.getId(), ITEM_URL));
+        testNotModified(item, 
+                () -> storeRestController.getItem(webRequest, response, context.getId(), ITEM_URL, false));
 
-        verify(storeService).getItem(context, ITEM_URL);
+        verify(storeService).getItem(context, null, ITEM_URL, null, false);
     }
 
     @Test
     public void testGetItemModified() throws Exception {
-        testModified(item, () -> storeRestController.getItem(webRequest, response, context.getId(), ITEM_URL));
+        testModified(item, () -> storeRestController.getItem(webRequest, response, context.getId(), ITEM_URL, false));
 
-        verify(storeService).getItem(context, ITEM_URL);
+        verify(storeService).getItem(context, null, ITEM_URL, null, false);
     }
 
     @Test(expected = ForbiddenPathException.class)
     public void testGetItemProtected() {
-        storeRestController.getItem(webRequest, response, context.getId(), PROTECTED_URL);
+        storeRestController.getItem(webRequest, response, context.getId(), PROTECTED_URL, false);
         fail("Expected " + ForbiddenPathException.class.getName() + " exception");
     }
 
     @Test
     public void testGetChildrenNotModified() throws Exception {
         testNotModified(children, () -> storeRestController.getChildren(webRequest, response, context.getId(),
-                                                                        FOLDER_URL));
+                                                                        FOLDER_URL, false));
 
         verify(storeService).getChildren(eq(context),
-                                         isNull(CachingOptions.class),
+                                         isNull(),
                                          eq(FOLDER_URL),
                                          any(ItemFilter.class),
-                                         isNull(ItemProcessor.class));
+                                         isNull(),
+                                         eq(false));
     }
 
     @Test(expected = ForbiddenPathException.class)
     public void testGetChildrenProtected() {
-        storeRestController.getChildren(webRequest, response, context.getId(), PROTECTED_URL);
+        storeRestController.getChildren(webRequest, response, context.getId(), PROTECTED_URL, false);
         fail("Expected " + ForbiddenPathException.class.getName() + " exception");
     }
 
     @Test
     public void testGetChildrenModified() throws Exception {
         testModified(children, () -> storeRestController.getChildren(webRequest, response, context.getId(),
-            FOLDER_URL));
+            FOLDER_URL, false));
 
         verify(storeService).getChildren(eq(context),
-                                         isNull(CachingOptions.class),
+                                         isNull(),
                                          eq(FOLDER_URL),
                                          any(ItemFilter.class),
-                                         isNull(ItemProcessor.class));
+                                         isNull(),
+                                         eq(false));
     }
 
     @Test
     public void testGetTreeNotModified() throws Exception {
         testNotModified(tree, () -> storeRestController.getTree(webRequest, response, context.getId(), FOLDER_URL,
-                                                                UNLIMITED_TREE_DEPTH));
+                                                                UNLIMITED_TREE_DEPTH, false));
 
         verify(storeService).getTree(eq(context),
-                                     isNull(CachingOptions.class),
+                                     isNull(),
                                      eq(FOLDER_URL),
                                      eq(UNLIMITED_TREE_DEPTH),
                                      any(ItemFilter.class),
-                                     isNull(ItemProcessor.class));
+                                     isNull(),
+                                     eq(false));
     }
 
     @Test
     public void testGetTreeModified() throws Exception {
         testModified(tree, () -> storeRestController.getTree(webRequest, response, context.getId(), FOLDER_URL,
-            UNLIMITED_TREE_DEPTH));
+            UNLIMITED_TREE_DEPTH, false));
 
         verify(storeService).getTree(eq(context),
-                                     isNull(CachingOptions.class),
+                                     isNull(),
                                      eq(FOLDER_URL),
                                      eq(UNLIMITED_TREE_DEPTH),
                                      any(ItemFilter.class),
-                                     isNull(ItemProcessor.class));
+                                     isNull(),
+                                     eq(false));
     }
 
     @Test(expected = ForbiddenPathException.class)
     public void testGetTreeProtected() {
-        storeRestController.getTree(webRequest, response, context.getId(), PROTECTED_URL, UNLIMITED_TREE_DEPTH);
+        storeRestController.getTree(webRequest, response, context.getId(), PROTECTED_URL, UNLIMITED_TREE_DEPTH, false);
         fail("Expected " + ForbiddenPathException.class.getName() + " exception");
     }
 
@@ -187,8 +182,8 @@ public class ContentStoreRestControllerTest {
         assertEquals(cachingAwareObject, object);
         assertEquals(HttpServletResponse.SC_OK, response.getStatus());
         //Remove the nano precession,
-        assertEquals(new Long(cachingAwareObject.getCachingTime()/1000),
-                     new Long(response.getDateHeader(LAST_MODIFIED_HEADER_NAME)/1000));
+        assertEquals(cachingAwareObject.getCachingTime()/1000,
+                     response.getDateHeader(LAST_MODIFIED_HEADER_NAME)/1000);
         assertEquals(MUST_REVALIDATE_HEADER_VALUE, response.getHeader(CACHE_CONTROL_HEADER_NAME));
     }
 
@@ -222,29 +217,30 @@ public class ContentStoreRestControllerTest {
         storeService = mock(ContentStoreService.class);
         try {
             when(storeService.getContext(context.getId())).thenReturn(context);
-            when(storeService.getItem(context, ITEM_URL)).thenReturn(item);
+            when(storeService.getItem(context, null, ITEM_URL, null, false)).thenReturn(item);
             when(storeService.getChildren(eq(context),
-                                          isNull(CachingOptions.class),
+                                          isNull(),
                                           eq(FOLDER_URL),
                                           any(ItemFilter.class),
-                                          isNull(ItemProcessor.class)))
+                                          isNull(),
+                                          eq(false)))
                     .thenReturn(children);
             when(storeService.getTree(eq(context),
-                                      isNull(CachingOptions.class),
+                                      isNull(),
                                       eq(FOLDER_URL),
                                       eq(UNLIMITED_TREE_DEPTH),
                                       any(ItemFilter.class),
-                                      isNull(ItemProcessor.class)))
+                                      isNull(),
+                                      eq(false)))
                     .thenReturn(tree);
         } catch (Exception e) {
         }
     }
 
     private void setUpTestStoreRestController() {
-        storeRestController = new ContentStoreRestController();
-        storeRestController.setStoreService(storeService);
+        storeRestController = new ContentStoreRestController(storeService);
         storeRestController.setForbiddenUrlPatterns(new String[] {"^/?protected(/.+)?$"});
-        storeRestController.init();
+        storeRestController.afterPropertiesSet();
     }
 
 }

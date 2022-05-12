@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,13 +15,10 @@
  */
 package org.craftercms.core.cache.impl;
 
-import java.util.Arrays;
-
 import org.craftercms.core.cache.CacheItem;
-import org.craftercms.core.cache.impl.store.EhCacheStoreAdapter;
+import org.craftercms.core.cache.impl.store.MapCacheStoreAdapter;
 import org.craftercms.core.exception.InternalCacheEngineException;
 import org.craftercms.core.exception.InvalidScopeException;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,23 +49,18 @@ public class CacheImplTest {
     private static final long REFRESH_FREQUENCY_VALUE1 = 1;
     private static final long REFRESH_FREQUENCY_VALUE2 = 2;
 
-    private EhCacheStoreAdapter cacheStore;
+    private CacheStoreAdapter cacheStore;
     private CacheImpl cache;
 
     @Before
     public void setUp() throws InternalCacheEngineException {
-        cacheStore = new EhCacheStoreAdapter();
+        cacheStore = new MapCacheStoreAdapter();
 
         cache = new CacheImpl();
         cache.setCacheRefresher(new CacheRefresherImpl());
         cache.setCacheStoreAdapter(cacheStore);
 
         cache.addScope(SCOPE, MAX_ITEMS_IN_MEMORY);
-    }
-
-    @After
-    public void tearDown() {
-        cacheStore.destroy();
     }
 
     @Test

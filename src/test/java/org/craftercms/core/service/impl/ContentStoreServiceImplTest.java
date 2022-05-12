@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -415,7 +415,7 @@ public class ContentStoreServiceImplTest {
             assertEquals(BUNDLE_FR_EXTENSION, bundleExtensions.get(0));
             assertEquals(BUNDLE_FR_ES_EXTENSION, bundleExtensions.get(1));
         } else {
-            List<Element> bundleExtensions = item.getDescriptorDom().selectNodes("//extension");
+            List<Node> bundleExtensions = item.getDescriptorDom().selectNodes("//extension");
             assertNotNull(bundleExtensions);
             assertEquals(2, bundleExtensions.size());
             assertEquals(BUNDLE_FR_EXTENSION, bundleExtensions.get(0).getText());

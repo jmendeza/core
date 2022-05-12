@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+ * Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as published by
@@ -15,26 +15,28 @@
  */
 package org.craftercms.core.processors.impl;
 
-import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Stack;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.craftercms.commons.locale.LocaleUtils;
 import org.craftercms.core.exception.ItemProcessingException;
 import org.craftercms.core.processors.ItemProcessor;
 import org.craftercms.core.service.CachingOptions;
 import org.craftercms.core.service.ContentStoreService;
 import org.craftercms.core.service.Context;
 import org.craftercms.core.service.Item;
-import org.craftercms.core.util.UrlUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.springframework.beans.factory.annotation.Required;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.Stack;
+
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 /**
  * {@link org.craftercms.core.processors.ItemProcessor} that finds special "include" tags found in a descriptor
@@ -69,6 +71,11 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
      * Processor to use for included items.
      */
     protected ItemProcessor includedItemsProcessor;
+
+    /**
+     * XPath query for the locale code element
+     */
+    protected String localeCodeXPathQuery;
 
     /**
      * Sets the XPath query used to retrieve the include elements.
@@ -108,6 +115,10 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
         this.includedItemsProcessor = includedItemsProcessor;
     }
 
+    public void setLocaleCodeXPathQuery(String localeCodeXPathQuery) {
+        this.localeCodeXPathQuery = localeCodeXPathQuery;
+    }
+
     /**
      * Replaces special include tags found in a descriptor document with the document tree of descriptors specified in
      * these include tags. If the include tag specifies a XPath query expression (through the select attribute), only
@@ -125,16 +136,15 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
         return item;
     }
 
-    @SuppressWarnings("unchecked")
     protected void includeDescriptors(Context context, CachingOptions cachingOptions, Item item) throws ItemProcessingException {
         String descriptorUrl = item.getDescriptorUrl();
 
         includedItemsStack.get().push(descriptorUrl);
         try {
             Document descriptorDom = item.getDescriptorDom();
-            List<Element> includeElements = descriptorDom.selectNodes(includeElementXPathQuery);
+            List<Node> includeNodes = descriptorDom.selectNodes(includeElementXPathQuery);
 
-            if (CollectionUtils.isEmpty(includeElements)) {
+            if (CollectionUtils.isEmpty(includeNodes)) {
                 return;
             }
 
@@ -142,32 +152,47 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
                 logger.debug("Processing includes of item @ " + descriptorUrl);
             }
 
-            for (Element includeElement : includeElements) {
-                String itemToIncludePath = includeElement.getTextTrim();
+            Locale locale = null;
+            if (isNotEmpty(localeCodeXPathQuery)) {
+                locale = LocaleUtils.parseLocale(item.queryDescriptorValue(localeCodeXPathQuery));
+            }
 
-                if (StringUtils.isEmpty(itemToIncludePath)) {
-                    continue;
-                }
+            for (Node node : includeNodes) {
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element includeElement = (Element) node;
+                    String itemToIncludePath = includeElement.getTextTrim();
 
-                if (!isIncludeDisabled(includeElement)) {
-                    if (!includedItemsStack.get().contains(itemToIncludePath)) {
-                        Item itemToInclude = getItemToInclude(context, cachingOptions, itemToIncludePath);
-                        if (itemToInclude != null && itemToInclude.getDescriptorDom() != null) {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("Include found in " + descriptorUrl + ": " + itemToIncludePath);
+                    if (StringUtils.isEmpty(itemToIncludePath)) {
+                        continue;
+                    }
+
+                    if (!isIncludeDisabled(includeElement)) {
+                        if (!includedItemsStack.get().contains(itemToIncludePath)) {
+                            if (locale != null) {
+                                itemToIncludePath = LocaleUtils.findPath(itemToIncludePath, locale, null,
+                                        path -> contentStoreService.exists(context, cachingOptions, path));
                             }
 
-                            doInclude(item, includeElement, itemToInclude);
+                            Item itemToInclude = getItemToInclude(context, cachingOptions, itemToIncludePath);
+                            if (itemToInclude != null && itemToInclude.getDescriptorDom() != null) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Include found in " + descriptorUrl + ": " + itemToIncludePath);
+                                }
+
+                                doInclude(item, includeElement, itemToInclude);
+                            } else {
+                                logger.debug("No descriptor item found @ " + itemToIncludePath);
+                            }
                         } else {
-                            logger.debug("No descriptor item found @ " + itemToIncludePath);
+                            logger.debug("Circular inclusion detected. Item " + itemToIncludePath + " already included");
                         }
                     } else {
-                        logger.debug("Circular inclusion detected. Item " + itemToIncludePath + " already included");
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Ignoring include " + itemToIncludePath + ". It's currently disabled");
+                        }
                     }
                 } else {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Ignoring include " + itemToIncludePath + ". It's currently disabled");
-                    }
+                    logger.info("Unable to execute against a non-XML-element: " + node.getUniquePath());
                 }
             }
         } finally {
@@ -189,7 +214,6 @@ public class IncludeDescriptorsProcessor implements ItemProcessor {
         }
     }
 
-    @SuppressWarnings("unchecked")
     protected void doInclude(Item item, Element includeElement, Item itemToInclude) throws ItemProcessingException {
         List<Node> includeElementParentChildren = includeElement.getParent().content();
         int includeElementIdx = includeElementParentChildren.indexOf(includeElement);

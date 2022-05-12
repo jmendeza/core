@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright (C) 2007-2020 Crafter Software Corporation. All Rights Reserved.
+  ~ Copyright (C) 2007-2022 Crafter Software Corporation. All Rights Reserved.
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License version 3 as published by
@@ -20,8 +20,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- Cache Store Adapter -->
-
-    <bean id="crafter.cacheStoreAdapter" class="org.craftercms.core.cache.impl.store.EhCacheStoreAdapter"/>
+    <bean id="crafter.cacheStoreAdapter" class="org.craftercms.core.cache.impl.store.guava.GuavaCacheStoreAdapter"/>
 
     <bean id="crafter.cacheRefresher" class="org.craftercms.core.cache.impl.CacheRefresherImpl"/>
 
